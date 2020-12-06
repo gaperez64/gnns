@@ -1,6 +1,6 @@
+import networkx as nx
 import numpy as np
 import pickle as pkl
-import networkx as nx
 import scipy.sparse as sp
 import sys
 
@@ -20,7 +20,7 @@ def sample_mask(idx, no_rows):
     return np.array(mask, dtype=np.bool)
 
 
-def load_data(dataset_str):
+def load_data(dataset_str, dataset_dir="./res"):
     """
     Loads input data from gcn/data directory
     ind.dataset_str.x => the feature vectors of the training instances as
@@ -49,7 +49,7 @@ def load_data(dataset_str):
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
-        with open(f"data/ind.{dataset_str}.{names[i]}", 'rb') as f:
+        with open(f"{dataset_dir}/ind.{dataset_str}.{names[i]}", 'rb') as f:
             if sys.version_info > (3, 0):
                 objects.append(pkl.load(f, encoding='latin1'))
             else:
@@ -57,7 +57,7 @@ def load_data(dataset_str):
 
     x, y, tx, ty, allx, ally, graph = tuple(objects)
     test_idx_reorder =\
-        parse_index_file(f"../data/ind.{dataset_str}.test.index")
+        parse_index_file(f"{dataset_dir}/ind.{dataset_str}.test.index")
     test_idx_range = np.sort(test_idx_reorder)
 
     if dataset_str == 'citeseer':
