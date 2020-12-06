@@ -2,11 +2,10 @@ import networkx as nx
 import numpy as np
 import pickle as pkl
 import scipy.sparse as sp
-import sys
 
 
 def parse_index_file(filename):
-    """Parse index file."""
+    """Parse index file"""
     index = []
     for line in open(filename):
         index.append(int(line.strip()))
@@ -14,15 +13,16 @@ def parse_index_file(filename):
 
 
 def sample_mask(idx, no_rows):
-    """Create mask."""
+    """Create mask"""
     mask = np.zeros(no_rows)
     mask[idx] = 1
     return np.array(mask, dtype=np.bool)
 
 
-def load_data(dataset_str, dataset_dir="./res"):
+def load_data_from_pkl(dataset_str, dataset_dir="./res"):
     """
-    Loads input data from gcn/data directory
+    Loads input data from pickle files
+
     ind.dataset_str.x => the feature vectors of the training instances as
     scipy.sparse.csr.csr_matrix object;
     ind.dataset_str.tx => the feature vectors of the test instances as
@@ -41,36 +41,20 @@ def load_data(dataset_str, dataset_dir="./res"):
     ind.dataset_str.test.index => the indices of test instances in graph, for
     the inductive setting as list object.
 
-    All objects above must be saved using python pickle module.
-
     :param dataset_str: Dataset name
-    :return: All data input files loaded (as well the training/test data).
+    :param dataset_dir: Directory containing the pickle files
+    :return: a Dataset object with all data
     """
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
         with open(f"{dataset_dir}/ind.{dataset_str}.{names[i]}", 'rb') as f:
-            if sys.version_info > (3, 0):
-                objects.append(pkl.load(f, encoding='latin1'))
-            else:
-                objects.append(pkl.load(f))
+            objects.append(pkl.load(f))
 
     x, y, tx, ty, allx, ally, graph = tuple(objects)
     test_idx_reorder =\
         parse_index_file(f"{dataset_dir}/ind.{dataset_str}.test.index")
     test_idx_range = np.sort(test_idx_reorder)
-
-    if dataset_str == 'citeseer':
-        # Fix citeseer dataset (there are some isolated nodes in the graph)
-        # Find isolated nodes, add them as zero-vecs into the right position
-        test_idx_range_full = range(min(test_idx_reorder),
-                                    max(test_idx_reorder)+1)
-        tx_extended = sp.lil_matrix((len(test_idx_range_full), x.shape[1]))
-        tx_extended[test_idx_range-min(test_idx_range), :] = tx
-        tx = tx_extended
-        ty_extended = np.zeros((len(test_idx_range_full), y.shape[1]))
-        ty_extended[test_idx_range-min(test_idx_range), :] = ty
-        ty = ty_extended
 
     features = sp.vstack((allx, tx)).tolil()
     features[test_idx_reorder, :] = features[test_idx_range, :]

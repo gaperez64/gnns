@@ -1,14 +1,15 @@
 # Graph Neural Networks
 This is a reimplementation of Kipf & Welling's graph convolutional networks in
-Tensorflow 2.0. Additionally, several modifications and alternative
-architectures are implemented for the purpose of comparison.
+Python 3 with Tensorflow 2. Additionally, several modifications and
+alternative architectures are implemented for the purpose of comparison.
 
 ## Datasets
 We recycle Kipf & Welling's datasets. That is we use citation network data
-(Cora, Citeseer or Pubmed). The original datasets can be found here:
-http://www.cs.umd.edu/~sen/lbc-proj/LBC.html. In the data directory
-we use dataset splits provided by https://github.com/kimiyoung/planetoid
-and described in the following article:
+(Cora, Citeseer, or Pubmed). The original datasets can be found here:
+http://www.cs.umd.edu/~sen/lbc-proj/LBC.html. The citeseer dataset has been
+"fixed" by Kipf due to isolated nodes. In the `res` directory we use dataset
+splits provided by https://github.com/kimiyoung/planetoid and described in the
+following article: 
 ```
 @article{DBLP:journals/corr/YangCS16,
   author    = {Zhilin Yang and
