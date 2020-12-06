@@ -19,13 +19,30 @@ def sample_mask(idx, no_rows):
     return np.array(mask, dtype=np.bool)
 
 
+def sparse_to_tuple(sparse_mx):
+    """Convert sparse matrix to tuple representation"""
+    def to_tuple(mx):
+        if not sp.isspmatrix_coo(mx):
+            mx = mx.tocoo()
+        coords = np.vstack((mx.row, mx.col)).transpose()
+        values = mx.data
+        shape = mx.shape
+        return coords, values, shape
+    if isinstance(sparse_mx, list):
+        for i in range(len(sparse_mx)):
+            sparse_mx[i] = to_tuple(sparse_mx[i])
+    else:
+        sparse_mx = to_tuple(sparse_mx)
+    return sparse_mx
+
+
 class Dataset:
     """
     Includes all the information we use from a graph-based
     dataset
     """
     graph: networkx.Graph
-    features: sp.lil.lil_matrix
+    features: tuple
     labels_train: np.ndarray
     labels_eval: np.ndarray
     labels_test: np.ndarray
@@ -92,6 +109,15 @@ class Dataset:
         y_val[val_mask, :] = labels[val_mask, :]
         y_test[test_mask, :] = labels[test_mask, :]
 
+        # Before we finish, we normalize the feature matrix
+        # and convert it to tuple representation
+        rowsum = np.array(features.sum(1))
+        r_inv = np.power(rowsum, -1).flatten()
+        r_inv[np.isinf(r_inv)] = 0.
+        r_mat_inv = sp.diags(r_inv)
+        features = sparse_to_tuple(r_mat_inv.dot(features))
+
+        # We can now store the values of the object's attributes
         self.graph = networkx.from_dict_of_lists(graph)
         self.features = features
         self.labels_train = y_train
@@ -100,3 +126,28 @@ class Dataset:
         self.train_mask = train_mask
         self.eval_mask = val_mask
         self.test_mask = test_mask
+
+    def normalized_adj(adj):
+        """Symmetrically normalize adjacency matrix."""
+        adj = sp.coo_matrix(adj)
+        rowsum = np.array(adj.sum(1))
+        d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+        d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+        d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+        return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+
+    def normd_adj_plus_id(self):
+        """Recover the symmetrically-normalized adjacency matrix
+        with an identity added
+        """
+        adj = networkx.adjacency_matrix(self.graph)
+        # adding the identity matrix
+        adj = adj + sp.eye(adj.shape[0])
+        adj = sp.coo_matrix(adj)
+        # now that we have added the identity matrix, we can normalize
+        rowsum = np.array(adj.sum(1))
+        d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+        d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+        d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+        normd = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+        return sparse_to_tuple(normd.tocoo())
