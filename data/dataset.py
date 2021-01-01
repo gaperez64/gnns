@@ -19,6 +19,15 @@ def sampleMask(idx, no_rows):
     return np.array(mask, dtype=np.bool)
 
 
+def normalizedAdj(adj):
+    """Symmetrically normalize adjacency matrix"""
+    rowsum = np.array(adj.sum(1))
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+
+
 class Dataset:
     """
     Includes all the information we use from a graph-based
@@ -27,10 +36,10 @@ class Dataset:
     graph: networkx.Graph
     features: np.ndarray
     labels_train: np.ndarray
-    labels_eval: np.ndarray
+    labels_val: np.ndarray
     labels_test: np.ndarray
     train_mask: np.ndarray
-    eval_mask: np.ndarray
+    val_mask: np.ndarray
     test_mask: np.ndarray
 
     def __init__(self, dataset_str, dataset_dir="./res"):
@@ -104,21 +113,20 @@ class Dataset:
         self.graph = networkx.from_dict_of_lists(graph)
         self.features = features
         self.labels_train = y_train
-        self.labels_eval = y_val
+        self.labels_val = y_val
         self.labels_test = y_test
         self.train_mask = train_mask
-        self.eval_mask = val_mask
+        self.val_mask = val_mask
         self.test_mask = test_mask
 
-    def normalized_adj(adj):
-        """Symmetrically normalize adjacency matrix."""
-        rowsum = np.array(adj.sum(1))
-        d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-        d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-        d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-        return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+    def normdAdj(self):
+        """
+        Recover the symmetrically-normalized adjacency matrix
+        """
+        adj = networkx.adjacency_matrix(self.graph)
+        return normalizedAdj(adj)
 
-    def normd_adj_plus_id(self):
+    def normdAdjId(self):
         """
         Recover the symmetrically-normalized adjacency matrix
         with an identity added
@@ -126,10 +134,4 @@ class Dataset:
         adj = networkx.adjacency_matrix(self.graph)
         # adding the identity matrix
         adj = adj + sp.eye(adj.shape[0])
-        # now that we have added the identity matrix, we can normalize
-        rowsum = np.array(adj.sum(1))
-        d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-        d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-        d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-        normd = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
-        return normd
+        return normalizedAdj(adj)
