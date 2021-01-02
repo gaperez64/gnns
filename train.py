@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-import scipy.sparse as sp
 
 from data.dataset import Dataset
 from models.gcn import GCN
@@ -22,23 +21,9 @@ gcn = GCN(in_dim=ds.features.shape[1],
           labels=ds.labels_train,
           labels_mask=ds.train_mask)
 
-# We print some debug info
-print(f"First output = {gcn(ds.features)}")
-print(gcn.variables)
-print(gcn.summary())
-assert(not sp.isspmatrix_coo(ds.features))
-sparse_mx = ds.features.tocoo()
-coords = np.vstack((sparse_mx.row, sparse_mx.col)).transpose()
-values = sparse_mx.data
-shape = sparse_mx.shape
-print(f"Feature coords = {coords}")
-print(f"Feature values = {values}")
-print(f"Feature shape = {shape}")
-
-
 # Train the model
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-for epoch in range(1, 11):
+for epoch in range(200):
     # we open a GradientTape to record the operations run during
     # the forward pass of the input data through the model,
     # this enables automatic differentiation
@@ -46,14 +31,35 @@ for epoch in range(1, 11):
         # run the forward pass
         logits = gcn(ds.features, training=True)
         # compute the loss value
-        loss_val = sum(gcn.losses)
+        train_loss = sum(gcn.losses)
         # and the accuracy
-        acc_val = gcn.metrics[0].result()
+        train_acc = gcn.metrics[0].result()
     # use the GradientTape to automatically retrieve the gradients
     # of the trainable weights w.r.t. the losses
-    grads = tape.gradient(loss_val, gcn.trainable_weights)
+    grads = tape.gradient(train_loss, gcn.trainable_weights)
     # run one step of gradient descent
     optimizer.apply_gradients(zip(grads, gcn.trainable_weights))
-    print(f"Epoch {epoch:04d} train loss={float(loss_val):.5f}, " +
-          f"train acc={float(acc_val):.5f}")
-    print(f"logits = {logits}")
+
+    # we also run a validation forward pass to see how we are doing w.r.t.
+    # to the validation part of the data set
+    gcn.setLabels(ds.labels_val, ds.val_mask)
+    logits = gcn(ds.features)
+    val_loss = sum(gcn.losses)
+    val_acc = gcn.metrics[0].result()
+    print(f"Epoch {epoch + 1:04d} train loss={float(train_loss):.5f}, " +
+          f"train acc={float(train_acc):.5f}; " +
+          f"valid loss={float(val_loss):.5f}, " +
+          f"valid acc={float(val_acc):.5f}")
+
+    # we reset the labels to the training ones
+    gcn.setLabels(ds.labels_train, ds.train_mask)
+
+print("=== Training finished ===")
+# to conclude, we run a test forward pass
+gcn.setLabels(ds.labels_test, ds.test_mask)
+logits = gcn(ds.features)
+test_loss = sum(gcn.losses)
+test_acc = gcn.metrics[0].result()
+print(f"test loss={float(test_loss):.5f}, " +
+      f"test acc={float(test_acc):.5f}")
+exit(0)
