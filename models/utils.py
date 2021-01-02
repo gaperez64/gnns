@@ -1,3 +1,4 @@
+import networkx
 import numpy as np
 import scipy.sparse as sp
 import tensorflow as tf
@@ -39,3 +40,34 @@ def zeros(shape, name=None):
     initial = tf.zeros(shape, dtype=tf.float32)
     return tf.Variable(initial, name=name, dtype=tf.float32,
                        trainable=True)
+
+
+def normalizedAdj(adj):
+    """Symmetrically normalize adjacency matrix"""
+    rowsum = np.array(adj.sum(1))
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+
+
+def normdAdj(graph):
+    """
+    Recover the symmetrically-normalized adjacency matrix
+    """
+    adj = networkx.adjacency_matrix(graph)
+    return normalizedAdj(adj)
+
+
+def normdAdjId(graph, scaling_factor=None):
+    """
+    Recover the symmetrically-normalized adjacency matrix
+    with an identity added
+    """
+    adj = networkx.adjacency_matrix(graph)
+    # adding the identity matrix
+    if scaling_factor is not None:
+        adj = adj + (scaling_factor * sp.eye(adj.shape[0]))
+    else:
+        adj = adj + sp.eye(adj.shape[0])
+    return normalizedAdj(adj)

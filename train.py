@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from data.dataset import Dataset
-from models.kipf import GCN
+from models.geerts import GCN
 
 
 # For reproducibility, we fix the random seed
@@ -17,13 +17,13 @@ ds = Dataset("cora")
 gcn = GCN(in_dim=ds.features.shape[1],
           out_dim=ds.labels_train.shape[1],
           nonzero_feat_shape=ds.features.data.shape,
-          convolution_matrix=ds.normdAdjId(),
+          graph=ds.graph,
           labels=ds.labels_train,
           labels_mask=ds.train_mask)
 
 # Train the model
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-for epoch in range(200):
+for epoch in range(300):
     # we open a GradientTape to record the operations run during
     # the forward pass of the input data through the model,
     # this enables automatic differentiation

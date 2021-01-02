@@ -1,6 +1,7 @@
 import tensorflow as tf
 
-from .utils import glorot, sparseDropout, sparseTensorFromMatrix
+from .utils import glorot, normdAdjId,\
+                   sparseDropout, sparseTensorFromMatrix
 
 
 class GCN(tf.keras.Model):
@@ -8,7 +9,7 @@ class GCN(tf.keras.Model):
                  in_dim,               # input dimension
                  out_dim,              # output dimension
                  nonzero_feat_shape,   # shape of nonzero features
-                 convolution_matrix,   # the normalized adjacency matrix
+                 graph,                # graph to get the norm'd adj. matrix
                  labels,               # labels to measure losses and accuracy
                  labels_mask,          # mask for labels
                  hidden_layer_dim=16,  # hidden layer dimension
@@ -19,7 +20,8 @@ class GCN(tf.keras.Model):
         self.in_dim = in_dim
         self.out_dim = out_dim
         self.nonzero_feat_shape = nonzero_feat_shape
-        self.convolution_matrix = sparseTensorFromMatrix(convolution_matrix)
+        self.convolution_matrix =\
+            sparseTensorFromMatrix(normdAdjId(graph))
         self.labels = labels
         self.labels_mask = labels_mask
         self.hidden_layer_dim = hidden_layer_dim

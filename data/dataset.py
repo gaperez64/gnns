@@ -19,15 +19,6 @@ def sampleMask(idx, no_rows):
     return np.array(mask, dtype=np.bool)
 
 
-def normalizedAdj(adj):
-    """Symmetrically normalize adjacency matrix"""
-    rowsum = np.array(adj.sum(1))
-    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
-
-
 class Dataset:
     """
     Includes all the information we use from a graph-based
@@ -118,23 +109,3 @@ class Dataset:
         self.train_mask = train_mask
         self.val_mask = val_mask
         self.test_mask = test_mask
-
-    def normdAdj(self):
-        """
-        Recover the symmetrically-normalized adjacency matrix
-        """
-        adj = networkx.adjacency_matrix(self.graph)
-        return normalizedAdj(adj)
-
-    def normdAdjId(self, scaling_factor=None):
-        """
-        Recover the symmetrically-normalized adjacency matrix
-        with an identity added
-        """
-        adj = networkx.adjacency_matrix(self.graph)
-        # adding the identity matrix
-        if scaling_factor is not None:
-            adj = adj + (scaling_factor * sp.eye(adj.shape[0]))
-        else:
-            adj = adj + sp.eye(adj.shape[0])
-        return normalizedAdj(adj)
