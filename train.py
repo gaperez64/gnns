@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from data.dataset import Dataset
-from models.gcn import GCN
+from models.kipf import GCN
 
 
 # For reproducibility, we fix the random seed

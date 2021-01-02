@@ -32,3 +32,10 @@ def glorot(shape, name=None):
                                 dtype=tf.float32)
     return tf.Variable(initial, name=name, dtype=tf.float32,
                        trainable=True)
+
+
+def zeros(shape, name=None):
+    """All zeros"""
+    initial = tf.zeros(shape, dtype=tf.float32)
+    return tf.Variable(initial, name=name, dtype=tf.float32,
+                       trainable=True)

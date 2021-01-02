@@ -126,12 +126,15 @@ class Dataset:
         adj = networkx.adjacency_matrix(self.graph)
         return normalizedAdj(adj)
 
-    def normdAdjId(self):
+    def normdAdjId(self, scaling_factor=None):
         """
         Recover the symmetrically-normalized adjacency matrix
         with an identity added
         """
         adj = networkx.adjacency_matrix(self.graph)
         # adding the identity matrix
-        adj = adj + sp.eye(adj.shape[0])
+        if scaling_factor is not None:
+            adj = adj + (scaling_factor * sp.eye(adj.shape[0]))
+        else:
+            adj = adj + sp.eye(adj.shape[0])
         return normalizedAdj(adj)
