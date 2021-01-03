@@ -1,11 +1,12 @@
 import tensorflow as tf
 
+from .gnn import GNN
 from .utils import glorot, normdAdjId,\
                    sparseDropout, sparseTensorFromMatrix,\
                    zeros
 
 
-class GCN(tf.keras.Model):
+class GCN(GNN):
     def __init__(self,
                  in_dim,               # input dimension
                  out_dim,              # output dimension
@@ -39,29 +40,6 @@ class GCN(tf.keras.Model):
                                             out_dim],
                                      name="weights2")
         self.bias_vector2 = zeros([out_dim], name="bias2")
-
-    def setLabels(self, labels, labels_mask):
-        self.labels = labels
-        self.labels_mask = labels_mask
-
-    def maskedSoftmaxXEntropy(self, preds):
-        """Softmax cross-entropy loss with masking"""
-        loss = tf.nn.softmax_cross_entropy_with_logits(logits=preds,
-                                                       labels=self.labels)
-        mask = tf.cast(self.labels_mask, dtype=tf.float32)
-        mask /= tf.reduce_mean(mask)
-        loss *= mask
-        return tf.reduce_mean(loss)
-
-    def maskedAccuracy(self, preds):
-        """Accuracy with masking"""
-        correct_prediction = tf.equal(tf.argmax(preds, 1),
-                                      tf.argmax(self.labels, 1))
-        accuracy_all = tf.cast(correct_prediction, tf.float32)
-        mask = tf.cast(self.labels_mask, dtype=tf.float32)
-        mask /= tf.reduce_mean(mask)
-        accuracy_all *= mask
-        return tf.reduce_mean(accuracy_all)
 
     def call(self, x, training=None):
         # Layer 1: inputs are sparse

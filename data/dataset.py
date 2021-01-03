@@ -95,7 +95,10 @@ class Dataset:
         # Before we finish, we normalize the feature matrix
         # and convert it to tuple representation
         rowsum = np.array(features.sum(1))
-        r_inv = np.power(rowsum, -1).flatten()
+        # the following may result in division by zero, but we will
+        # correct in the next step, so we can ignore that issue
+        with np.errstate(divide='ignore'):
+            r_inv = np.power(rowsum, -1).flatten()
         r_inv[np.isinf(r_inv)] = 0.
         r_mat_inv = sp.diags(r_inv)
         features = r_mat_inv.dot(features)
