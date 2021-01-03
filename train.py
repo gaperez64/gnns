@@ -1,13 +1,14 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import sys
 import tensorflow as tf
 
 from data.dataset import Dataset
 import models.kipf
+import models.geerts
 
 
-def trainModel(model, dataset, num_epochs=200, debug=False):
+def trainModel(model, dataset, num_epochs=500, debug=False):
     # Train the model
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     val_acc_list = []
@@ -67,7 +68,8 @@ def main(plot=False):
     # We load the dataset
     gnns = {"gcn": models.kipf.GCN,
             "tiny-gcn": models.kipf.TinyGCN,
-            "tiny-deg-gcn": models.kipf.TinydGCN}
+            "tiny-deg-gcn": models.kipf.TinydGCN,
+            "deg-gcn": models.geerts.GCN}
     for dsname in ["cora", "citeseer", "pubmed"]:
         ds = Dataset(dsname)
         for name, GNN in gnns.items():
@@ -97,7 +99,7 @@ def main(plot=False):
 if __name__ == "__main__":
     if len(sys.argv) > 2 or len(sys.argv) == 2 and sys.argv[1] != "-plot":
         print(f"{sys.argv[0]} expects at most one option \"-plot\":\n" +
-              "whether to plot valuation values.", file=sys.stderr)
+              "whether to plot valuation values", file=sys.stderr)
         exit(1)
     main(len(sys.argv) == 2)
     exit(0)
