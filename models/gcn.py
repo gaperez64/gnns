@@ -5,7 +5,7 @@ from .utils import glorot, normdAdjIdTensor,\
                    sparseDropout, sparseTensorFromMatrix,\
                    zeros
 
-IDFAC = 0.4271  # id_factor default value for all GCNs
+IDFAC = 0.9471  # id_factor default value for all GCNs
 
 
 class GCN(Base):
@@ -206,7 +206,7 @@ class GCN2p(Base):
             x = tf.nn.dropout(x, 1 - self.dropout_rate)
         x = tf.matmul(x, self.weight_matrix2)
         x = tf.sparse.sparse_dense_matmul(self.convolution_matrix, x)
-        x = tf.nn.relu(x)
+        #x = tf.nn.relu(x)
         # Setting up losses for training
         self.add_loss(self.weight_decay * tf.nn.l2_loss(self.weight_matrix2))
         self.add_loss(self.maskedSoftmaxXEntropy(x))
