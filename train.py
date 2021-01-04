@@ -59,12 +59,7 @@ def trainModel(model, dataset, num_epochs=300, debug=False):
     return (test_loss, test_acc, val_acc_list)
 
 
-def main(plot=False):
-    # For reproducibility, we fix the random seed
-    seed = 123
-    np.random.seed(seed)
-    tf.random.set_seed(seed)
-
+def set1(plot=False):
     # First set of graphs: comparing p values
     # We prepare a dictionary of p-GNNs to compare
     gnns = {"2layr-gcn": models.gcn.GCN2p,
@@ -98,6 +93,8 @@ def main(plot=False):
             plt.savefig(f"{dsname}-pvalues")
             plt.clf()
 
+
+def set2(plot=False):
     # Second set of graphs: comparing GCN architectures
     # We prepare a dictionary of GNNs to compare
     gnns = {"gcn": models.gcn.GCN,
@@ -128,6 +125,8 @@ def main(plot=False):
             plt.savefig(f"{dsname}-gcns")
             plt.clf()
 
+
+def set3(plot=False):
     # Third set of graphs: comparing GCN architectures
     # We prepare a dictionary of GNNs to compare
     gnns = {"2layr-gnn-grohe": models.gnn.GNN2Grohe,
@@ -160,9 +159,23 @@ def main(plot=False):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2 or len(sys.argv) == 2 and sys.argv[1] != "-plot":
-        print(f"{sys.argv[0]} expects at most one option \"-plot\":\n" +
-              "whether to plot valuation values", file=sys.stderr)
-        exit(1)
-    main(len(sys.argv) == 2)
+    # For reproducibility, we fix the random seed
+    seed = 123
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+
+    for s in sys.argv[1:]:
+        s = int(s)
+        if s == 1:
+            print("== Running test set 1 ==")
+            set1(True)
+        elif s == 2:
+            print("== Running test set 2 ==")
+            set2(True)
+        elif s == 3:
+            print("== Running test set 3 ==")
+            set3(True)
+        else:
+            print(f"Unexpected test set {s}", file=sys.stderr)
+            exit(1)
     exit(0)

@@ -4,11 +4,6 @@ import scipy.sparse as sp
 import tensorflow as tf
 
 
-def adjTensor(graph):
-    adj = networkx.adjacency_matrix(graph)
-    return tf.Tensor(adj, dtype=tf.float32)
-
-
 def sparseTensorFromMatrix(sparse_mx):
     """Convert sparse matrix to tuple representation"""
     if not sp.isspmatrix_coo(sparse_mx):
@@ -18,6 +13,11 @@ def sparseTensorFromMatrix(sparse_mx):
     shape = sparse_mx.shape
     res = tf.sparse.SparseTensor(coords, values, shape)
     return tf.cast(res, dtype=tf.float32)
+
+
+def adjTensor(graph):
+    adj = networkx.adjacency_matrix(graph)
+    return sparseTensorFromMatrix(adj)
 
 
 def sparseDropout(x, dropout_rate, noise_shape):
@@ -81,10 +81,14 @@ def normdAdjId(graph, scaling_factor=None):
     return normalizedAdj(adj, adj_replacement=adj_id_scaled)
 
 
+def normdAdjIdTensor(graph, scaling_factor=None):
+    return sparseTensorFromMatrix(normdAdjId(graph, scaling_factor))
+
+
 def adjIdTensor(graph, scaling_factor=None):
     adj = networkx.adjacency_matrix(graph)
     if scaling_factor is None:
         adj = adj + sp.eye(adj.shape[0])
     else:
         adj = adj + (scaling_factor * sp.eye(adj.shape[0]))
-    return tf.Tensor(adj, dtype=tf.float32)
+    return sparseTensorFromMatrix(adj)
