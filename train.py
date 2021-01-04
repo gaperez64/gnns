@@ -4,10 +4,11 @@ import sys
 import tensorflow as tf
 
 from data.dataset import Dataset
-import models.kipf
+import models.gcn
+import models.gnn
 
 
-def trainModel(model, dataset, num_epochs=200, debug=False):
+def trainModel(model, dataset, num_epochs=300, debug=False):
     # Train the model
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     val_acc_list = []
@@ -64,11 +65,43 @@ def main(plot=False):
     np.random.seed(seed)
     tf.random.set_seed(seed)
 
-    # We load the dataset
-    gnns = {"gcn": models.kipf.GCN,
-            "1layr-gcn": models.kipf.GCN1,
-            "1layr-p-gcn": models.kipf.GCN1p,
-            "2layr-p-gcn": models.kipf.GCN2p}
+    # First set of graphs: comparing p values
+    # We prepare a dictionary of p-GNNs to compare
+    gnns = {"2layr-gcn": models.gcn.GCN2p,
+            "2layr-gnn": models.gnn.GNN2pBias}
+    for dsname in ["cora", "citeseer", "pubmed"]:
+        ds = Dataset(dsname)
+        for name, GNN in gnns.items():
+            for p in range(1, 10, 2):
+                p = p / 10.0
+                # We instantiate a gcn model
+                gcn = GNN(in_dim=ds.features.shape[1],
+                          out_dim=ds.labels_train.shape[1],
+                          nonzero_feat_shape=ds.features.data.shape,
+                          graph=ds.graph,
+                          labels=ds.labels_train,
+                          labels_mask=ds.train_mask,
+                          id_factor=p)
+                # Train the gcn
+                (loss, acc, val_accs) = trainModel(gcn, ds)
+                print(f"== Trained GNN {name}-{p} on dataset {dsname} ==")
+                print(f"test loss={float(loss):.5f}, " +
+                      f"test acc={float(acc):.5f}")
+                if plot:
+                    plt.plot(range(len(val_accs)),
+                             val_accs, label=f"{name}-{p}")
+        if plot:
+            plt.legend(loc="lower right")
+            plt.title(f"\"{dsname}\" dataset")
+            plt.xlabel("Training epochs")
+            plt.ylabel("Validation accuracy")
+            plt.savefig(f"{dsname}-pvalues")
+            plt.clf()
+
+    # Second set of graphs: comparing GCN architectures
+    # We prepare a dictionary of GNNs to compare
+    gnns = {"gcn": models.gcn.GCN,
+            "2layr-p-gcn": models.gcn.GCN2p}
     for dsname in ["cora", "citeseer", "pubmed"]:
         ds = Dataset(dsname)
         for name, GNN in gnns.items():
@@ -92,8 +125,38 @@ def main(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(dsname)
-            # plt.show()
+            plt.savefig(f"{dsname}-gcns")
+            plt.clf()
+
+    # Third set of graphs: comparing GCN architectures
+    # We prepare a dictionary of GNNs to compare
+    gnns = {"2layr-gnn-grohe": models.gnn.GNN2Grohe,
+            "2layr-p-gnn": models.gnn.GNN2pBias}
+    for dsname in ["cora", "citeseer", "pubmed"]:
+        ds = Dataset(dsname)
+        for name, GNN in gnns.items():
+            # We instantiate a gcn model
+            gcn = GNN(in_dim=ds.features.shape[1],
+                      out_dim=ds.labels_train.shape[1],
+                      nonzero_feat_shape=ds.features.data.shape,
+                      graph=ds.graph,
+                      labels=ds.labels_train,
+                      labels_mask=ds.train_mask)
+            # Train the gcn
+            (loss, acc, val_accs) = trainModel(gcn, ds)
+            print(f"== Trained GNN {name} on dataset {dsname} ==")
+            print(f"test loss={float(loss):.5f}, " +
+                  f"test acc={float(acc):.5f}")
+            if plot:
+                plt.plot(range(len(val_accs)),
+                         val_accs, label=f"{name}")
+        if plot:
+            plt.legend(loc="lower right")
+            plt.title(f"\"{dsname}\" dataset")
+            plt.xlabel("Training epochs")
+            plt.ylabel("Validation accuracy")
+            plt.savefig(f"{dsname}-gnns")
+            plt.clf()
 
 
 if __name__ == "__main__":

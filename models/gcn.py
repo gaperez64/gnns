@@ -121,7 +121,7 @@ class GCN1p(Base):
                  hidden_layer_dim=16,  # hidden layer dimension
                  dropout_rate=0.5,     # dropout rate for training
                  weight_decay=5e-4,    # weight decay for parameter fitting
-                 id_factor=0.9997):    # scaling factor a, for aI in D(A+I)D
+                 id_factor=0.9997):    # scaling factor a, for aI in D(A+aI)D
         super(GCN1p, self).__init__()
 
         self.in_dim = in_dim
@@ -169,7 +169,7 @@ class GCN2p(Base):
                  hidden_layer_dim=16,  # hidden layer dimension
                  dropout_rate=0.5,     # dropout rate for training
                  weight_decay=5e-4,    # weight decay for parameter fitting
-                 id_factor=0.9997):    # scaling factor a, for aI in D(A+I)D
+                 id_factor=0.9997):    # scaling factor a, for aI in D(A+aI)D
         super(GCN2p, self).__init__()
 
         self.in_dim = in_dim
@@ -230,7 +230,7 @@ class GCN2pBias(Base):
                  hidden_layer_dim=16,  # hidden layer dimension
                  dropout_rate=0.5,     # dropout rate for training
                  weight_decay=5e-4,    # weight decay for parameter fitting
-                 id_factor=0.9997):    # scaling factor a, for aI in D(A+I)D
+                 id_factor=0.9997):    # scaling factor a, for aI in D(A+aI)D
         super(GCN2pBias, self).__init__()
 
         self.in_dim = in_dim

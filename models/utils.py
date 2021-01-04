@@ -4,6 +4,11 @@ import scipy.sparse as sp
 import tensorflow as tf
 
 
+def adjTensor(graph):
+    adj = networkx.adjacency_matrix(graph)
+    return tf.Tensor(adj, dtype=tf.float32)
+
+
 def sparseTensorFromMatrix(sparse_mx):
     """Convert sparse matrix to tuple representation"""
     if not sp.isspmatrix_coo(sparse_mx):
@@ -74,3 +79,12 @@ def normdAdjId(graph, scaling_factor=None):
     if scaling_factor is not None:
         adj_id_scaled = adj + (scaling_factor * sp.eye(adj.shape[0]))
     return normalizedAdj(adj, adj_replacement=adj_id_scaled)
+
+
+def adjIdTensor(graph, scaling_factor=None):
+    adj = networkx.adjacency_matrix(graph)
+    if scaling_factor is None:
+        adj = adj + sp.eye(adj.shape[0])
+    else:
+        adj = adj + (scaling_factor * sp.eye(adj.shape[0]))
+    return tf.Tensor(adj, dtype=tf.float32)
