@@ -5,7 +5,7 @@ from .utils import adjIdTensor, adjTensor, glorot,\
                    sparseDropout, sparseTensorFromMatrix,\
                    zeros
 
-IDFAC = 0.2952  # id_factor default value for all GNNs
+IDFAC = 0.5872  # id_factor default value for all GNNs
 
 
 class GNN2Bias(Base):
