@@ -42,13 +42,16 @@ def zeros(shape, name=None):
                        trainable=True)
 
 
-def normalizedAdj(adj):
+def normalizedAdj(adj, adj_replacement=None):
     """Symmetrically normalize adjacency matrix"""
     rowsum = np.array(adj.sum(1))
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+    # We have D, we can now compute DAD
+    if adj_replacement is None:
+        adj_replacement = adj
+    return adj_replacement.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
 
 
 def normdAdj(graph):
@@ -66,8 +69,8 @@ def normdAdjId(graph, scaling_factor=None):
     """
     adj = networkx.adjacency_matrix(graph)
     # adding the identity matrix
+    adj = adj + sp.eye(adj.shape[0])
+    adj_id_scaled = None
     if scaling_factor is not None:
-        adj = adj + (scaling_factor * sp.eye(adj.shape[0]))
-    else:
-        adj = adj + sp.eye(adj.shape[0])
-    return normalizedAdj(adj)
+        adj_id_scaled = adj + (scaling_factor * sp.eye(adj.shape[0]))
+    return normalizedAdj(adj, adj_replacement=adj_id_scaled)

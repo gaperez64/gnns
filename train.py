@@ -5,10 +5,9 @@ import tensorflow as tf
 
 from data.dataset import Dataset
 import models.kipf
-import models.geerts
 
 
-def trainModel(model, dataset, num_epochs=500, debug=False):
+def trainModel(model, dataset, num_epochs=200, debug=False):
     # Train the model
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     val_acc_list = []
@@ -67,9 +66,9 @@ def main(plot=False):
 
     # We load the dataset
     gnns = {"gcn": models.kipf.GCN,
-            "tiny-gcn": models.kipf.TinyGCN,
-            "tiny-deg-gcn": models.kipf.TinydGCN,
-            "deg-gcn": models.geerts.GCN}
+            "1layr-gcn": models.kipf.GCN1,
+            "1layr-p-gcn": models.kipf.GCN1p,
+            "2layr-p-gcn": models.kipf.GCN2p}
     for dsname in ["cora", "citeseer", "pubmed"]:
         ds = Dataset(dsname)
         for name, GNN in gnns.items():
@@ -93,7 +92,8 @@ def main(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.show()
+            plt.savefig(dsname)
+            # plt.show()
 
 
 if __name__ == "__main__":

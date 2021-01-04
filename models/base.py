@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 
-class GNN(tf.keras.Model):
+class Base(tf.keras.Model):
     def __init__(self):
-        super(GNN, self).__init__()
+        super(Base, self).__init__()
         self.labels = None
         self.labels_mask = None
 
