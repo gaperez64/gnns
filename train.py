@@ -8,7 +8,7 @@ import models.gcn
 import models.gnn
 
 
-def trainModel(model, dataset, num_epochs=500, debug=False):
+def trainModel(model, dataset, num_epochs=300, debug=False):
     # Train the model
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     val_acc_list = []
@@ -90,7 +90,7 @@ def set1(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-pvalues", format="pdf")
+            plt.savefig(f"{dsname}-pvalues.pdf", format="pdf")
             plt.clf()
 
 
@@ -122,7 +122,7 @@ def set2(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-gcns", format="pdf")
+            plt.savefig(f"{dsname}-gcns.pdf", format="pdf")
             plt.clf()
 
 
@@ -154,7 +154,7 @@ def set3(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-gnns", format="pdf")
+            plt.savefig(f"{dsname}-gnns.pdf", format="pdf")
             plt.clf()
 
 
@@ -189,7 +189,7 @@ def set4(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-gnn-deg", format="pdf")
+            plt.savefig(f"{dsname}-gnn-deg.pdf", format="pdf")
             plt.clf()
 
 
