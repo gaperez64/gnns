@@ -8,7 +8,7 @@ import models.gcn
 import models.gnn
 
 
-def trainModel(model, dataset, num_epochs=300, debug=False):
+def trainModel(model, dataset, num_epochs=500, debug=False):
     # Train the model
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     val_acc_list = []
@@ -60,7 +60,7 @@ def trainModel(model, dataset, num_epochs=300, debug=False):
 
 
 def set1(plot=False):
-    # First set of graphs: comparing p values
+    # First set of tests: comparing GNNs with A + pI
     # We prepare a dictionary of p-GNNs to compare
     gnns = {"2layr-gcn": models.gcn.GCN2p,
             "2layr-gnn": models.gnn.GNN2pBias}
@@ -69,16 +69,16 @@ def set1(plot=False):
         for name, GNN in gnns.items():
             for p in range(1, 10, 2):
                 p = p / 10.0
-                # We instantiate a gcn model
-                gcn = GNN(in_dim=ds.features.shape[1],
-                          out_dim=ds.labels_train.shape[1],
-                          nonzero_feat_shape=ds.features.data.shape,
-                          graph=ds.graph,
-                          labels=ds.labels_train,
-                          labels_mask=ds.train_mask,
-                          id_factor=p)
-                # Train the gcn
-                (loss, acc, val_accs) = trainModel(gcn, ds)
+                # We instantiate a model
+                model = GNN(in_dim=ds.features.shape[1],
+                            out_dim=ds.labels_train.shape[1],
+                            nonzero_feat_shape=ds.features.data.shape,
+                            graph=ds.graph,
+                            labels=ds.labels_train,
+                            labels_mask=ds.train_mask,
+                            id_factor=p)
+                # Train the model
+                (loss, acc, val_accs) = trainModel(model, ds)
                 print(f"== Trained GNN {name}-{p} on dataset {dsname} ==")
                 print(f"test loss={float(loss):.5f}, " +
                       f"test acc={float(acc):.5f}")
@@ -90,7 +90,7 @@ def set1(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-pvalues")
+            plt.savefig(f"{dsname}-pvalues", format="pdf")
             plt.clf()
 
 
@@ -102,15 +102,15 @@ def set2(plot=False):
     for dsname in ["cora", "citeseer", "pubmed"]:
         ds = Dataset(dsname)
         for name, GNN in gnns.items():
-            # We instantiate a gcn model
-            gcn = GNN(in_dim=ds.features.shape[1],
-                      out_dim=ds.labels_train.shape[1],
-                      nonzero_feat_shape=ds.features.data.shape,
-                      graph=ds.graph,
-                      labels=ds.labels_train,
-                      labels_mask=ds.train_mask)
-            # Train the gcn
-            (loss, acc, val_accs) = trainModel(gcn, ds)
+            # We instantiate a model
+            model = GNN(in_dim=ds.features.shape[1],
+                        out_dim=ds.labels_train.shape[1],
+                        nonzero_feat_shape=ds.features.data.shape,
+                        graph=ds.graph,
+                        labels=ds.labels_train,
+                        labels_mask=ds.train_mask)
+            # Train the model
+            (loss, acc, val_accs) = trainModel(model, ds)
             print(f"== Trained GNN {name} on dataset {dsname} ==")
             print(f"test loss={float(loss):.5f}, " +
                   f"test acc={float(acc):.5f}")
@@ -122,12 +122,12 @@ def set2(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-gcns")
+            plt.savefig(f"{dsname}-gcns", format="pdf")
             plt.clf()
 
 
 def set3(plot=False):
-    # Third set of graphs: comparing GCN architectures
+    # Third set of graphs: comparing GNN architectures
     # We prepare a dictionary of GNNs to compare
     gnns = {"2layr-gnn-grohe": models.gnn.GNN2Grohe,
             "2layr-p-gnn": models.gnn.GNN2pBias}
@@ -154,18 +154,53 @@ def set3(plot=False):
             plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
-            plt.savefig(f"{dsname}-gnns")
+            plt.savefig(f"{dsname}-gnns", format="pdf")
+            plt.clf()
+
+
+def set4(plot=False):
+    # Fourth set of graphs: comparing GNN architectures
+    # with and without degree information in the input
+    GNN = models.gnn.GNN2Bias
+    for dsname in ["cora", "citeseer", "pubmed"]:
+        for add_deg in [False, True]:
+            ds = Dataset(dsname, add_degree=add_deg)
+            # We instantiate a model
+            model = GNN(in_dim=ds.features.shape[1],
+                        out_dim=ds.labels_train.shape[1],
+                        nonzero_feat_shape=ds.features.data.shape,
+                        graph=ds.graph,
+                        labels=ds.labels_train,
+                        labels_mask=ds.train_mask)
+            # Train the model
+            (loss, acc, val_accs) = trainModel(model, ds)
+            if add_deg:
+                name = "2layr-gnn-deg"
+            else:
+                name = "2layer-gnn"
+            print(f"== Trained GNN {name} on dataset {dsname} ==")
+            print(f"test loss={float(loss):.5f}, " +
+                  f"test acc={float(acc):.5f}")
+            if plot:
+                plt.plot(range(len(val_accs)),
+                         val_accs, label=f"{name}")
+        if plot:
+            plt.legend(loc="lower right")
+            plt.title(f"\"{dsname}\" dataset")
+            plt.xlabel("Training epochs")
+            plt.ylabel("Validation accuracy")
+            plt.savefig(f"{dsname}-gnn-deg", format="pdf")
             plt.clf()
 
 
 if __name__ == "__main__":
-    # For reproducibility, we fix the random seed
-    seed = 123
-    np.random.seed(seed)
-    tf.random.set_seed(seed)
-
     for s in sys.argv[1:]:
         s = int(s)
+        # for reproducibility, we fix the random seed
+        seed = 123
+        np.random.seed(seed)
+        tf.random.set_seed(seed)
+        # run a set of tests
         if s == 1:
             print("== Running test set 1 ==")
             set1(True)
@@ -175,6 +210,9 @@ if __name__ == "__main__":
         elif s == 3:
             print("== Running test set 3 ==")
             set3(True)
+        elif s == 4:
+            print("== Running test set 4 ==")
+            set4(True)
         else:
             print(f"Unexpected test set {s}", file=sys.stderr)
             exit(1)

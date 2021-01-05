@@ -33,25 +33,33 @@ class Dataset:
     val_mask: np.ndarray
     test_mask: np.ndarray
 
-    def __init__(self, dataset_str, dataset_dir="./res"):
+    def __init__(self, dataset_str, dataset_dir="./res", add_degree=False):
         """
         Loads data from pickle files
 
         ind.dataset_str.x => the feature vectors of the training instances as
         scipy.sparse.csr.csr_matrix object;
+
         ind.dataset_str.tx => the feature vectors of the test instances as
-        scipy.sparse.csr.csr_matrix object; ind.dataset_str.allx => the
+        scipy.sparse.csr.csr_matrix object;
+
+        ind.dataset_str.allx => the
         feature vectors of both labeled and unlabeled
         training instances (a superset of ind.dataset_str.x) as
         scipy.sparse.csr.csr_matrix object;
+
         ind.dataset_str.y => the one-hot labels of the labeled training
         instances as numpy.ndarray object;
+
         ind.dataset_str.ty => the one-hot labels of the test instances as
         numpy.ndarray object;
+
         ind.dataset_str.ally => the labels for instances in
         ind.dataset_str.allx as numpy.ndarray object;
+
         ind.dataset_str.graph => a dict in the format {index:
         [index_of_neighbor_nodes]} as collections.defaultdict object;
+
         ind.dataset_str.test.index => the indices of test instances in graph,
         for the inductive setting as list object.
 
@@ -67,11 +75,16 @@ class Dataset:
                 objects.append(pickle.load(f))
 
         x, y, tx, ty, allx, ally, graph = tuple(objects)
+        graph = networkx.from_dict_of_lists(graph)
         test_idx_reorder =\
             parseIndexFile(f"{dataset_dir}/ind.{dataset_str}.test.index")
         test_idx_range = np.sort(test_idx_reorder)
 
         features = sp.vstack((allx, tx)).tolil()
+        # we add a new component with the degree of the vertex for the feature
+        if add_degree:
+            deg = networkx.adjacency_matrix(graph).sum(1)
+            features = sp.hstack((features, deg)).tolil()
         features[test_idx_reorder, :] = features[test_idx_range, :]
 
         labels = np.vstack((ally, ty))
@@ -93,7 +106,6 @@ class Dataset:
         y_test[test_mask, :] = labels[test_mask, :]
 
         # Before we finish, we normalize the feature matrix
-        # and convert it to tuple representation
         rowsum = np.array(features.sum(1))
         # the following may result in division by zero, but we will
         # correct in the next step, so we can ignore that issue
@@ -104,7 +116,7 @@ class Dataset:
         features = r_mat_inv.dot(features)
 
         # We can now store the values of the object's attributes
-        self.graph = networkx.from_dict_of_lists(graph)
+        self.graph = graph
         self.features = features
         self.labels_train = y_train
         self.labels_val = y_val
