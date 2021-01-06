@@ -161,29 +161,29 @@ def set3(plot=False):
 def set4(plot=False):
     # Fourth set of graphs: comparing GNN architectures
     # with and without degree information in the input
-    GNN = models.gnn.GNN2Bias
+    # We prepare a dictionary of GNNs to compare
+    gnns = {"2layr-gnn": models.gnn.GNN2Bias}
     for dsname in ["cora", "citeseer", "pubmed"]:
         for add_deg in [False, True]:
             ds = Dataset(dsname, add_degree=add_deg)
-            # We instantiate a model
-            model = GNN(in_dim=ds.features.shape[1],
-                        out_dim=ds.labels_train.shape[1],
-                        nonzero_feat_shape=ds.features.data.shape,
-                        graph=ds.graph,
-                        labels=ds.labels_train,
-                        labels_mask=ds.train_mask)
-            # Train the model
-            (loss, acc, val_accs) = trainModel(model, ds)
-            if add_deg:
-                name = "2layr-gnn-deg"
-            else:
-                name = "2layer-gnn"
-            print(f"== Trained GNN {name} on dataset {dsname} ==")
-            print(f"test loss={float(loss):.5f}, " +
-                  f"test acc={float(acc):.5f}")
-            if plot:
-                plt.plot(range(len(val_accs)),
-                         val_accs, label=f"{name}")
+            for name, GNN in gnns.items():
+                # We instantiate a model
+                model = GNN(in_dim=ds.features.shape[1],
+                            out_dim=ds.labels_train.shape[1],
+                            nonzero_feat_shape=ds.features.data.shape,
+                            graph=ds.graph,
+                            labels=ds.labels_train,
+                            labels_mask=ds.train_mask)
+                # Train the model
+                (loss, acc, val_accs) = trainModel(model, ds)
+                if add_deg:
+                    name += "-deg"
+                print(f"== Trained GNN {name} on dataset {dsname} ==")
+                print(f"test loss={float(loss):.5f}, " +
+                      f"test acc={float(acc):.5f}")
+                if plot:
+                    plt.plot(range(len(val_accs)),
+                             val_accs, label=f"{name}")
         if plot:
             plt.legend(loc="lower right")
             plt.title(f"\"{dsname}\" dataset")
@@ -194,8 +194,7 @@ def set4(plot=False):
 
 
 if __name__ == "__main__":
-    for s in sys.argv[1:]:
-        s = int(s)
+    for s in range(3, 5):
         # for reproducibility, we fix the random seed
         seed = 123
         np.random.seed(seed)

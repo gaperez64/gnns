@@ -8,6 +8,54 @@ from .utils import adjIdTensor, adjTensor, glorot,\
 IDFAC = 0.5872  # id_factor default value for all GNNs
 
 
+class GNN1Bias(Base):
+    def __init__(self,
+                 in_dim,               # input dimension
+                 out_dim,              # output dimension
+                 nonzero_feat_shape,   # shape of nonzero features
+                 graph,                # graph to get the norm'd adj. matrix
+                 labels,               # labels to measure losses and accuracy
+                 labels_mask,          # mask for labels
+                 dropout_rate=0.5,     # dropout rate for training
+                 weight_decay=5e-4):   # weight decay for parameter fitting
+        super(GNN1Bias, self).__init__()
+
+        self.in_dim = in_dim
+        self.out_dim = out_dim
+        self.nonzero_feat_shape = nonzero_feat_shape
+        self.adjacency_matrix = adjTensor(graph)
+        self.labels = labels
+        self.labels_mask = labels_mask
+        self.dropout_rate = dropout_rate
+        self.weight_decay = weight_decay
+        self.weight_matrix1 = glorot(shape=[in_dim,
+                                            out_dim],
+                                     name="weights1")
+        self.bias_vector1 = zeros([out_dim],
+                                  name="bias1")
+
+    def call(self, x, training=None):
+        # Layer 1: inputs are sparse
+        x = sparseTensorFromMatrix(x)
+        # if we are training, we enable the dropout layer
+        if training:
+            x = sparseDropout(x, self.dropout_rate,
+                              self.nonzero_feat_shape)
+        x = tf.sparse.sparse_dense_matmul(x, self.weight_matrix1)
+        x = tf.sparse.sparse_dense_matmul(self.adjacency_matrix, x)
+        x = x + self.bias_vector1
+        x = tf.nn.relu(x)
+        # Setting up losses for training
+        self.add_loss(self.weight_decay * tf.nn.l2_loss(self.weight_matrix1))
+        self.add_loss(self.weight_decay * tf.nn.l2_loss(self.bias_vector1))
+        self.add_loss(self.maskedSoftmaxXEntropy(x))
+
+        # Add accuracy as a metric
+        self.add_metric(self.maskedAccuracy(x), name="accuracy")
+
+        return x
+
+
 class GNN2Bias(Base):
     def __init__(self,
                  in_dim,               # input dimension
