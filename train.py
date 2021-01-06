@@ -8,7 +8,7 @@ import models.gcn
 import models.gnn
 
 
-def trainModel(model, dataset, num_epochs=300, debug=False):
+def trainModel(model, dataset, num_epochs=500, debug=False):
     # Train the model
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     val_acc_list = []
