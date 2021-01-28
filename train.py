@@ -87,7 +87,7 @@ def set1(plot=False):
                              val_accs, label=f"{name}-{p}")
         if plot:
             plt.legend(loc="lower right")
-            plt.title(f"\"{dsname}\" dataset")
+            # plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
             plt.savefig(f"{dsname}-pvalues.pdf", format="pdf")
@@ -119,7 +119,7 @@ def set2(plot=False):
                          val_accs, label=f"{name}")
         if plot:
             plt.legend(loc="lower right")
-            plt.title(f"\"{dsname}\" dataset")
+            # plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
             plt.savefig(f"{dsname}-gcns.pdf", format="pdf")
@@ -151,7 +151,7 @@ def set3(plot=False):
                          val_accs, label=f"{name}")
         if plot:
             plt.legend(loc="lower right")
-            plt.title(f"\"{dsname}\" dataset")
+            # plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
             plt.savefig(f"{dsname}-gnns.pdf", format="pdf")
@@ -186,7 +186,7 @@ def set4(plot=False):
                              val_accs, label=f"{name}")
         if plot:
             plt.legend(loc="lower right")
-            plt.title(f"\"{dsname}\" dataset")
+            # plt.title(f"\"{dsname}\" dataset")
             plt.xlabel("Training epochs")
             plt.ylabel("Validation accuracy")
             plt.savefig(f"{dsname}-gnn-deg.pdf", format="pdf")
