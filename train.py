@@ -129,8 +129,8 @@ def set2(plot=False):
 def set3(plot=False):
     # Third set of graphs: comparing GNN architectures
     # We prepare a dictionary of GNNs to compare
-    gnns = {"2layr-gnn-grohe": models.gnn.GNN2Grohe,
-            "2layr-p-gnn": models.gnn.GNN2pBias}
+    gnns = {"2 layers, Arch. (A2)": models.gnn.GNN2Grohe,
+            "2 layers, Arch. (A3)": models.gnn.GNN2pBias}
     for dsname in ["cora", "citeseer", "pubmed"]:
         ds = Dataset(dsname)
         for name, GNN in gnns.items():
@@ -162,7 +162,7 @@ def set4(plot=False):
     # Fourth set of graphs: comparing GNN architectures
     # with and without degree information in the input
     # We prepare a dictionary of GNNs to compare
-    gnns = {"2layr-gnn": models.gnn.GNN2Bias}
+    gnns = {"2-layer GNN (A1)": models.gnn.GNN2Bias}
     for dsname in ["cora", "citeseer", "pubmed"]:
         for add_deg in [False, True]:
             ds = Dataset(dsname, add_degree=add_deg)
@@ -177,7 +177,7 @@ def set4(plot=False):
                 # Train the model
                 (loss, acc, val_accs) = trainModel(model, ds)
                 if add_deg:
-                    name += "-deg"
+                    name += "+ deg. info."
                 print(f"== Trained GNN {name} on dataset {dsname} ==")
                 print(f"test loss={float(loss):.5f}, " +
                       f"test acc={float(acc):.5f}")
