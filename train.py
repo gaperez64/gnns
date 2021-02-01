@@ -177,7 +177,7 @@ def set4(plot=False):
                 # Train the model
                 (loss, acc, val_accs) = trainModel(model, ds)
                 if add_deg:
-                    name += "+ deg. info."
+                    name += " + deg. info."
                 print(f"== Trained GNN {name} on dataset {dsname} ==")
                 print(f"test loss={float(loss):.5f}, " +
                       f"test acc={float(acc):.5f}")
