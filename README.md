@@ -6,6 +6,12 @@ Competition (SYNTCOMP). All [benchmarks
 considered](https://github.com/SYNTCOMP/benchmarks/tree/master/aiger) are in
 the AIGER format.
 
+## Dependencies
+The following Python 3 libraries
+* `tensorflow-gnn`
+* `py-aiger`
+as well as their respective dependencies (see `requirements.txt`)
+
 # Data Preparation
 
 
