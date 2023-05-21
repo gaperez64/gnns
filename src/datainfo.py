@@ -46,5 +46,5 @@ if __name__ == "__main__":
         exit(1)
     else:
         latchNames = scanBenchmarks(sys.argv[1])
-        printLatchNames(sys.argv[2])
+        printLatchNames(latchNames, sys.argv[2])
         exit(0)
