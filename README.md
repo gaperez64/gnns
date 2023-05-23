@@ -10,9 +10,14 @@ the AIGER format.
 The following Python 3 libraries
 * `tensorflow-gnn`
 * `py-aiger`
-as well as their respective dependencies (see `requirements.txt`)
+* `distance`
+* `scikit-learn`
+as well as their respective dependencies
 
 # Data Preparation
+The list of all latch names from the benchmarks under consideration was
+generated using `src/datainfo.py` and stored in `data/latch_names.txt`.
+
 Statistics regarding the considered benchmarks:
 * min no. of latches = 0
 * mean no. of latches = 510.95
@@ -21,6 +26,9 @@ Statistics regarding the considered benchmarks:
 This information suggests we cluster the latch names to get a set of feature
 to use in our learning task.
 
+## Clustering of latch names
+TODO: Create 300 clusters?
+
 
 # Training Setup
-
+TODO
