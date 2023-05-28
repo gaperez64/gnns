@@ -70,8 +70,6 @@ def clusterNamesFromFile(fname):
                 lev_list[i].append(levenshtein(words[i], words[j]))
             else:
                 lev_list[i].append(levenshtein(words[j], words[i]))
-        if i % 10 == 0:
-            print(f"A few distances: {lev_list[i][0:10]}")
     lev_array = np.array(lev_list)
     print("Done! saving them now")
     np.save(lev_array, "lev_array.npy")
