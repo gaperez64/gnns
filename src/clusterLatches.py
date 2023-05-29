@@ -10,6 +10,7 @@ on how to cluster strings into similarity groups.
 
 from functools import lru_cache
 import numpy as np
+import re
 from sklearn.cluster import KMeans
 import sys
 
@@ -34,31 +35,38 @@ def levenshtein(x, y):
     return prev[-1]
 
 
-def clusterNamesFromFile(fname):
+def latchNamesFromFile(fname):
     latchNames = open(fname, "r")
-    words = np.asarray([latch.strip() for latch in latchNames])
+    word_list = [latch.strip() for latch in latchNames]
     latchNames.close()
-    lev_list = []
-    mlen = max([len(w) for w in words])
-    print(f"Number of latch names = {len(words)}")
-    print(f"Max length of latch names = {mlen}")
+    print(f"Number of latch names = {len(word_list)}")
 
-    # partition list by lengths
-    words = sorted(words, key=lambda w: len(w))
-    curlen = len(words[0])
-    partlen = {curlen: []}
-    idx = 0
-    for w in words:
-        if len(w) > curlen:
-            curlen = len(w)
-            partlen[curlen] = []
-        partlen[curlen].append((w, idx))
-        idx += 1
-    print("Strings grouped by length:")
-    print({k: len(v) for k, v in partlen.items()})
+    # some manual transformations
+    lo = re.compile("lo\\d*")
+    latch = re.compile("latch\\d*")
+    label = re.compile("label__l\\d*")
+    signal = re.compile("signal\\d*")
+    words = []
+    for word in word_list:
+        if lo.match(word) is not None:
+            words.append("loX")
+        elif latch.match(word) is not None:
+            words.append("latchX")
+        elif label.match(word) is not None:
+            words.append("label__lX")
+        elif signal.match(word) is not None:
+            words.append("signalX")
+        else:
+            words.append(word)
+    words = sorted(list(set(words)), key=lambda w: len(w))
+    print(f"After manual treatment = {len(words)}")
+    return words
 
-    # Start of levenshtein computations
+
+def prepLevMatrix(words):
+    # prepare levenshtein distance matrix
     print("=== Computing levenshtein distances ===")
+    lev_list = []
     for i in range(len(words)):
         lev_list.append([])
         if i % 10 == 0:
@@ -71,12 +79,12 @@ def clusterNamesFromFile(fname):
             else:
                 lev_list[i].append(levenshtein(words[j], words[i]))
     lev_array = np.array(lev_list)
-    print("Done! saving them now")
-    np.save(lev_array, "lev_array.npy")
-    return clusterNames(lev_array)
+    np.save("lev_array.npy", lev_array)
+    return clusterNames(words, lev_array)
 
 
 def clusterNames(words, lev_array):
+    words = np.asarray(words)  # so that it can be indexed with arrays
     lev_similarity = -1 * lev_array
     affprop = KMeans(n_clusters=300,
                      random_state=0,  # to make deterministic
@@ -97,13 +105,21 @@ def printClusters(latchNames, fname):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Two positional arguments expected:\n"
+    if len(sys.argv) not in [3, 4]:
+        print("Three positional arguments expected:\n"
               "(1) the full path of the file with the latch names\n"
-              "(2) the full path of the file where you want the output",
+              "(2) the full path of the file where you want the output\n"
+              "(3) optional: distance matrix file",
               file=sys.stderr)
         exit(1)
+    elif len(sys.argv) == 3:
+        latchNames = latchNamesFromFile(sys.argv[1])
+        clusters = prepLevMatrix(latchNames)
+        printClusters(clusters, sys.argv[2])
+        exit(0)
     else:
-        latchNames = clusterNamesFromFile(sys.argv[1])
-        printClusters(latchNames, sys.argv[2])
+        latchNames = latchNamesFromFile(sys.argv[1])
+        lev_array = np.load(sys.argv[3])
+        clusters = clusterNames(latchNames, lev_array)
+        printClusters(clusters, sys.argv[2])
         exit(0)
