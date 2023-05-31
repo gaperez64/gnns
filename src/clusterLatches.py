@@ -10,8 +10,7 @@ on how to cluster strings into similarity groups.
 
 from functools import lru_cache
 import numpy as np
-import re
-from sklearn.cluster import KMeans
+from sklearn.cluster import AffinityPropagation, AgglomerativeClustering
 import sys
 
 
@@ -42,22 +41,23 @@ def latchNamesFromFile(fname):
     print(f"Number of latch names = {len(word_list)}")
 
     # some manual transformations
-    lo = re.compile("lo\\d*")
-    latch = re.compile("latch\\d*")
-    label = re.compile("label__l\\d*")
-    signal = re.compile("signal\\d*")
-    words = []
-    for word in word_list:
-        if lo.match(word) is not None:
-            words.append("loX")
-        elif latch.match(word) is not None:
-            words.append("latchX")
-        elif label.match(word) is not None:
-            words.append("label__lX")
-        elif signal.match(word) is not None:
-            words.append("signalX")
-        else:
-            words.append(word)
+    # lo = re.compile("lo\\d*")
+    # latch = re.compile("latch\\d*")
+    # label = re.compile("label__l\\d*")
+    # signal = re.compile("signal\\d*")
+    # words = []
+    # for word in word_list:
+    #     if lo.match(word) is not None:
+    #         words.append("loX")
+    #     elif latch.match(word) is not None:
+    #         words.append("latchX")
+    #     elif label.match(word) is not None:
+    #         words.append("label__lX")
+    #     elif signal.match(word) is not None:
+    #         words.append("signalX")
+    #     else:
+    #         words.append(word)
+    words = word_list[:1000]
     words = sorted(list(set(words)), key=lambda w: len(w))
     print(f"After manual treatment = {len(words)}")
     return words
@@ -80,21 +80,26 @@ def prepLevMatrix(words):
                 lev_list[i].append(levenshtein(words[j], words[i]))
     lev_array = np.array(lev_list)
     np.save("lev_array.npy", lev_array)
+    print("=== Done computing distances ===")
     return clusterNames(words, lev_array)
 
 
 def clusterNames(words, lev_array):
     words = np.asarray(words)  # so that it can be indexed with arrays
-    lev_similarity = -1 * lev_array
-    affprop = KMeans(n_clusters=300,
-                     random_state=0,  # to make deterministic
-                     n_init="auto").fit(lev_similarity)
-    for cluster_id in np.unique(affprop.labels_):
-        exemplar = words[affprop.cluster_centers_indices_[cluster_id]]
-        cluster = np.unique(words[np.nonzero(affprop.labels_ == cluster_id)])
-        cluster_str = ", ".join(cluster)
-        print(" - *%s:* %s" % (exemplar, cluster_str))
-    return words[affprop.cluster_centers_indices_]
+    lev_similarity = -1.0 * lev_array
+    # cluster_algo = AgglomerativeClustering(n_clusters=50,
+    #                                        metric='precomputed',
+    #                                        linkage='average')
+    cluster_algo = AffinityPropagation(affinity="precomputed", damping=0.5,
+                                       verbose=True, random_state=0)
+    clusters = cluster_algo.fit_predict(lev_similarity)
+    cluster_strings = []
+    for cid in np.unique(clusters):
+        c = words[np.nonzero(clusters == cid)]
+        cstring = ", ".join(c)
+        print(f"Cluster {cid}: {cstring}")
+        cluster_strings.append(cstring)
+    return cluster_strings
 
 
 def printClusters(latchNames, fname):
