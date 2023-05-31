@@ -10,7 +10,7 @@ on how to cluster strings into similarity groups.
 
 from functools import lru_cache
 import numpy as np
-from sklearn.cluster import AffinityPropagation, AgglomerativeClustering
+from sklearn.cluster import AffinityPropagation
 import sys
 
 
@@ -36,41 +36,20 @@ def levenshtein(x, y):
 
 def latchNamesFromFile(fname):
     latchNames = open(fname, "r")
-    word_list = [latch.strip() for latch in latchNames]
+    words = [latch.strip() for latch in latchNames]
     latchNames.close()
-    print(f"Number of latch names = {len(word_list)}")
-
-    # some manual transformations
-    # lo = re.compile("lo\\d*")
-    # latch = re.compile("latch\\d*")
-    # label = re.compile("label__l\\d*")
-    # signal = re.compile("signal\\d*")
-    # words = []
-    # for word in word_list:
-    #     if lo.match(word) is not None:
-    #         words.append("loX")
-    #     elif latch.match(word) is not None:
-    #         words.append("latchX")
-    #     elif label.match(word) is not None:
-    #         words.append("label__lX")
-    #     elif signal.match(word) is not None:
-    #         words.append("signalX")
-    #     else:
-    #         words.append(word)
-    words = word_list[:1000]
-    words = sorted(list(set(words)), key=lambda w: len(w))
-    print(f"After manual treatment = {len(words)}")
+    print(f"Number of latch names = {len(words)}")
     return words
 
 
-def prepLevMatrix(words):
+def levMatAndCluster(words):
     # prepare levenshtein distance matrix
-    print("=== Computing levenshtein distances ===")
+    # print("=== Computing levenshtein distances ===")
     lev_list = []
     for i in range(len(words)):
         lev_list.append([])
-        if i % 10 == 0:
-            print(f"Treating word {i + 1}: {words[i]}")
+        # if i % 10 == 0:
+        #     print(f"Treating word {i + 1}: {words[i]}")
         for j in range(len(words)):
             if i == j:
                 lev_list[i].append(0)
@@ -80,26 +59,19 @@ def prepLevMatrix(words):
                 lev_list[i].append(levenshtein(words[j], words[i]))
     lev_array = np.array(lev_list)
     np.save("lev_array.npy", lev_array)
-    print("=== Done computing distances ===")
+    # print("=== Done computing distances ===")
     return clusterNames(words, lev_array)
 
 
 def clusterNames(words, lev_array):
     words = np.asarray(words)  # so that it can be indexed with arrays
     lev_similarity = -1.0 * lev_array
-    # cluster_algo = AgglomerativeClustering(n_clusters=50,
-    #                                        metric='precomputed',
-    #                                        linkage='average')
     cluster_algo = AffinityPropagation(affinity="precomputed", damping=0.5,
                                        verbose=True, random_state=0)
-    clusters = cluster_algo.fit_predict(lev_similarity)
-    cluster_strings = []
-    for cid in np.unique(clusters):
-        c = words[np.nonzero(clusters == cid)]
-        cstring = ", ".join(c)
-        print(f"Cluster {cid}: {cstring}")
-        cluster_strings.append(cstring)
-    return cluster_strings
+    cluster_algo.fit_predict(lev_similarity)
+    unique_labels = np.unique(cluster_algo.labels_)
+    c0 = words[cluster_algo.cluster_centers_indices_[unique_labels]]
+    return c0
 
 
 def printClusters(latchNames, fname):
@@ -119,7 +91,31 @@ if __name__ == "__main__":
         exit(1)
     elif len(sys.argv) == 3:
         latchNames = latchNamesFromFile(sys.argv[1])
-        clusters = prepLevMatrix(latchNames)
+        # partition into sub lists of latch names
+        sublists = [latchNames]
+        changed = True
+        while changed:
+            changed = False
+            newlists = []
+            for sub in sublists:
+                if len(sub) > 1000:  # FIXME 1K hardcoded
+                    newlists.append(sub[len(sub) // 2:])
+                    newlists.append(sub[:len(sub) // 2:])
+                    changed = True
+                else:
+                    newlists.append(sub)
+            sublists = newlists
+        # cluster all sublists and then merge them
+        newlists = []
+        print(f"No. of sublists = {len(sublists)}")
+        print([len(sub) for sub in sublists])
+        for sub in sublists:
+            clusters = levMatAndCluster(sub)
+            print(f"No. of resulting clusters = {len(clusters)}")
+            newlists.extend(clusters)
+        # do a final clustering
+        clusters = levMatAndCluster(sub)
+        print(f"Final no. of clusters = {len(clusters)}")
         printClusters(clusters, sys.argv[2])
         exit(0)
     else:
