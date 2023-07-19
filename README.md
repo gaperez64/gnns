@@ -27,8 +27,8 @@ This information suggests we cluster the latch names to get a set of feature
 to use in our learning task.
 
 ## Clustering of latch names
-TODO: Create 300 clusters?
-
+The script `src/clusterLatches.py` has been used to obtain 56 clusters of
+latches stored in `data/latch_clusters.txt`.
 
 # Training Setup
 TODO
